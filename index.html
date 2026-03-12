@@ -21,6 +21,30 @@
         }
     </script>
     <style>
+        /* Sidebar */
+        #info-sidebar {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: 420px;
+            max-width: 92vw;
+            background: #fff;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.10);
+            z-index: 200;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+            border-left: 1px solid #e2e8f0;
+        }
+        #info-sidebar.open { transform: translateX(0); }
+        #sidebar-backdrop {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(15,23,42,0.25);
+            backdrop-filter: blur(2px);
+            z-index: 199;
+        }
+        #sidebar-backdrop.open { display: block; }
+
         .glass {
             background: rgba(255,255,255,0.85);
             backdrop-filter: blur(12px);
@@ -86,54 +110,136 @@
 </head>
 <body class="bg-gradient-to-br from-slate-100 to-blue-50 text-slate-800 font-sans min-h-screen pb-24">
 
+<!-- Sidebar backdrop -->
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+<!-- Info Sidebar -->
+<aside id="info-sidebar">
+    <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-slate-500"></i>
+            <span class="font-black text-sm text-slate-800">背景概念說明</span>
+        </div>
+        <button onclick="closeSidebar()" class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
+        </button>
+    </div>
+
+    <div class="px-6 py-6 space-y-6">
+
+        <!-- Ledger concept -->
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">帳本機制</p>
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3 mb-3">
+                <div class="shrink-0 w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-blue-900 text-sm mb-1">雙邊帳本（銀行）</p>
+                    <p class="text-xs text-blue-700 leading-relaxed">全球各銀行各自維護獨立帳本，沒有統一資料庫。即便有 SWIFT 通訊協議，各國銀行仍有不同上下班時間，無法即時更新。跨境匯款必須經過多個帳本「接力傳遞」，每個斷點都是潛在等待時間。</p>
+                </div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex gap-3">
+                <div class="shrink-0 w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="globe" class="w-4 h-4 text-emerald-600"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-emerald-900 text-sm mb-1">全球統一帳本（區塊鏈）</p>
+                    <p class="text-xs text-emerald-700 leading-relaxed">底層區塊鏈是全球共享、即時更新的單一狀態機，無論從台灣轉到美國，都不受時差影響。只要區塊確認，兩地的餘額同步更新，沒有「中間帳本」的概念。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance -->
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">合規與安全</p>
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
+                <div class="shrink-0 w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center mt-0.5">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-amber-600"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-amber-900 text-sm mb-1">合規不是穩定幣的弱點</p>
+                    <p class="text-xs text-amber-800 leading-relaxed mb-2">穩定幣常被誤解為「跳過合規才變快」，這不符合事實。每筆資金匯入交易所時，系統都會執行金流分析，確認鏈上地址無風險才完成入帳。</p>
+                    <p class="text-xs text-amber-700 leading-relaxed">速度快來自帳本架構本身，不是靠繞過監管。工具包含 <strong>Chainalysis</strong>、<strong>TRM Labs</strong> 等，同樣嚴謹。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison table -->
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">完整比較</p>
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden text-xs">
+                <div class="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50">
+                    <div class="p-3 font-bold text-slate-400 uppercase tracking-wide text-[10px]">項目</div>
+                    <div class="p-3 font-black text-blue-700 flex items-center gap-1"><i data-lucide="building-2" class="w-3 h-3"></i> 銀行</div>
+                    <div class="p-3 font-black text-emerald-700 flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i> 穩定幣</div>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    <div class="grid grid-cols-3 divide-x divide-slate-100">
+                        <div class="p-3 bg-slate-50 font-bold text-slate-500 text-[10px] uppercase">帳本架構</div>
+                        <div class="p-3 text-slate-600">各行獨立，無統一資料庫</div>
+                        <div class="p-3 text-slate-600">全球單一狀態機</div>
+                    </div>
+                    <div class="grid grid-cols-3 divide-x divide-slate-100">
+                        <div class="p-3 bg-slate-50 font-bold text-slate-500 text-[10px] uppercase">時差影響</div>
+                        <div class="p-3 text-red-500 font-bold">✕ 高度敏感</div>
+                        <div class="p-3 text-emerald-600 font-bold">✓ 不受影響</div>
+                    </div>
+                    <div class="grid grid-cols-3 divide-x divide-slate-100">
+                        <div class="p-3 bg-slate-50 font-bold text-slate-500 text-[10px] uppercase">清算時間</div>
+                        <div class="p-3 text-slate-600">1–5 工作日</div>
+                        <div class="p-3 text-slate-600">數秒～數分鐘</div>
+                    </div>
+                    <div class="grid grid-cols-3 divide-x divide-slate-100">
+                        <div class="p-3 bg-slate-50 font-bold text-slate-500 text-[10px] uppercase">合規方式</div>
+                        <div class="p-3 text-slate-600">人工審核，造成延遲</div>
+                        <div class="p-3 text-slate-600">自動化金流分析，同樣嚴謹</div>
+                    </div>
+                    <div class="grid grid-cols-3 divide-x divide-slate-100">
+                        <div class="p-3 bg-slate-50 font-bold text-slate-500 text-[10px] uppercase">手續費</div>
+                        <div class="p-3 text-slate-600">可達 $30+（多層費用）</div>
+                        <div class="p-3 text-slate-600">Gas fee，通常 &lt; $1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer notes -->
+        <div class="space-y-3">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">底層邏輯補充</p>
+            <div class="flex items-start gap-2.5 text-xs text-slate-500 bg-blue-50 rounded-xl p-3">
+                <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 text-blue-400 mt-0.5"></i>
+                <p>銀行轉帳的本質是：各地銀行的獨立帳本透過 SWIFT 訊息做「一來一回」的記錄同步，實體頭寸最終才在清算行調整。各帳本之間沒有統一資料庫，時差是結構性瓶頸。</p>
+            </div>
+            <div class="flex items-start gap-2.5 text-xs text-slate-500 bg-emerald-50 rounded-xl p-3">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5 shrink-0 text-emerald-500 mt-0.5"></i>
+                <p>穩定幣快不是因為跳過合規，而是帳本架構本身沒有「地區分隔」。交易所端同樣有嚴謹的 KYC/AML 與金流分析，底層清算在單一全球帳本上完成，不受時區限制。</p>
+            </div>
+        </div>
+
+    </div>
+</aside>
+
+<!-- Sidebar trigger button (fixed) -->
+<button onclick="openSidebar()" id="sidebar-btn" class="fixed top-5 right-5 z-[100] flex items-center gap-2 bg-white border border-slate-200 shadow-lg rounded-full pl-3 pr-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all hover:shadow-xl active:scale-95">
+    <i data-lucide="book-open" class="w-4 h-4 text-slate-500"></i>
+    <span>概念說明</span>
+</button>
+
 <div class="max-w-7xl mx-auto pt-12 md:pt-20 px-4 md:px-8">
 
     <!-- Header -->
     <header class="text-center mb-14 md:mb-20 px-4">
         <div class="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 shadow-sm">
-            <i data-lucide="layers" class="w-3.5 h-3.5"></i> 帳本機制模擬器
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i> 互動模擬器
         </div>
         <h1 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
             銀行轉帳 vs 穩定幣轉帳
         </h1>
-        <p class="text-base md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            兩種轉帳方式，底層邏輯完全不同。<br>
-            透過互動模擬，理解帳本更新、時差瓶頸與合規機制的本質差異。
+        <p class="text-base md:text-xl text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">
+            點擊下方按鈕，模擬兩種轉帳方式的實際運作流程。
         </p>
     </header>
-
-    <!-- Core Concept Cards -->
-    <div class="grid md:grid-cols-2 gap-4 mb-12">
-        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex gap-4">
-            <div class="shrink-0 w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
-            </div>
-            <div>
-                <p class="font-bold text-blue-900 mb-1">雙邊帳本（銀行）</p>
-                <p class="text-sm text-blue-700 leading-relaxed">全球各銀行各自維護獨立帳本，沒有統一資料庫。即便有 SWIFT 通訊協議，各國銀行仍有不同上下班時間，無法即時更新。</p>
-            </div>
-        </div>
-        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex gap-4">
-            <div class="shrink-0 w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <i data-lucide="globe" class="w-5 h-5 text-emerald-600"></i>
-            </div>
-            <div>
-                <p class="font-bold text-emerald-900 mb-1">全球統一帳本（區塊鏈）</p>
-                <p class="text-sm text-emerald-700 leading-relaxed">底層區塊鏈是全球共享、即時更新的單一狀態機，無論從台灣轉到美國，都不受時差影響，區塊確認後即同步。</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Compliance Callout -->
-    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-12 flex gap-4 items-start">
-        <div class="shrink-0 w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mt-0.5">
-            <i data-lucide="shield-check" class="w-5 h-5 text-amber-600"></i>
-        </div>
-        <div>
-            <p class="font-bold text-amber-900 mb-1">合規不是穩定幣的弱點，而是同樣嚴謹</p>
-            <p class="text-sm text-amber-800 leading-relaxed">穩定幣常被誤解為「跳過合規才變快」。事實上，每筆資金匯入交易所時，系統都會執行金流分析（透過 Chainalysis、TRM Labs 等工具），確認鏈上地址無風險才完成入帳。速度快來自帳本架構，不是靠繞過監管。</p>
-        </div>
-    </div>
 
     <!-- Simulations -->
     <div class="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
@@ -250,13 +356,6 @@
 
             </div>
 
-            <!-- Footer note -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <div class="flex items-start gap-3 text-sm text-slate-500">
-                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-blue-400 mt-0.5"></i>
-                    <p>銀行轉帳的本質是：各地銀行的獨立帳本透過 SWIFT 訊息做「一來一回」的記錄同步，實體頭寸最終才在清算行調整。各帳本之間沒有統一資料庫，時差是結構性瓶頸。</p>
-                </div>
-            </div>
         </div>
 
         <!-- === STABLECOIN TRANSFER === -->
@@ -363,59 +462,8 @@
                 </div>
             </div>
 
-            <!-- Footer note -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <div class="flex items-start gap-3 text-sm text-slate-500">
-                    <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-emerald-500 mt-0.5"></i>
-                    <p>穩定幣快不是因為跳過合規，而是帳本架構本身沒有「地區分隔」。交易所端同樣有嚴謹的 KYC/AML 與金流分析，但底層清算在單一全球帳本上完成，不受時區限制。</p>
-                </div>
-            </div>
         </div>
 
-    </div>
-
-    <!-- Bottom comparison table -->
-    <div class="mt-12 bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
-        <div class="grid grid-cols-3 divide-x divide-slate-100">
-            <div class="p-5 bg-slate-50">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">比較項目</p>
-            </div>
-            <div class="p-5 flex items-center gap-2">
-                <i data-lucide="building-2" class="w-4 h-4 text-blue-600 shrink-0"></i>
-                <p class="font-black text-sm text-blue-700">銀行跨境匯款</p>
-            </div>
-            <div class="p-5 flex items-center gap-2">
-                <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                <p class="font-black text-sm text-emerald-700">穩定幣轉帳</p>
-            </div>
-        </div>
-        <div class="divide-y divide-slate-100">
-            <div class="grid grid-cols-3 divide-x divide-slate-100">
-                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">帳本架構</div>
-                <div class="p-4 text-sm text-slate-600">各銀行獨立維護，無統一資料庫</div>
-                <div class="p-4 text-sm text-slate-600">全球共享單一狀態機</div>
-            </div>
-            <div class="grid grid-cols-3 divide-x divide-slate-100">
-                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">時差影響</div>
-                <div class="p-4 text-sm text-slate-600"><span class="cross">✕</span> 高度敏感，需等對方銀行上班</div>
-                <div class="p-4 text-sm text-slate-600"><span class="tick">✓</span> 完全不受時差影響</div>
-            </div>
-            <div class="grid grid-cols-3 divide-x divide-slate-100">
-                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">清算時間</div>
-                <div class="p-4 text-sm text-slate-600">1–5 個工作日</div>
-                <div class="p-4 text-sm text-slate-600">數秒至數分鐘（一個區塊）</div>
-            </div>
-            <div class="grid grid-cols-3 divide-x divide-slate-100">
-                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">合規機制</div>
-                <div class="p-4 text-sm text-slate-600">人工審核 + 聯徵合規（造成延遲）</div>
-                <div class="p-4 text-sm text-slate-600">自動化金流分析（Chainalysis / TRM），速度快但同樣嚴謹</div>
-            </div>
-            <div class="grid grid-cols-3 divide-x divide-slate-100">
-                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">手續費</div>
-                <div class="p-4 text-sm text-slate-600">電匯費 + 中轉費 + 解款費，可達 $30+</div>
-                <div class="p-4 text-sm text-slate-600">Gas fee 為主，通常遠低於 $1</div>
-            </div>
-        </div>
     </div>
 
     <footer class="mt-16 text-center pb-6">
@@ -425,6 +473,17 @@
 
 <script>
     lucide.createIcons();
+
+    function openSidebar() {
+        document.getElementById('info-sidebar').classList.add('open');
+        document.getElementById('sidebar-backdrop').classList.add('open');
+        document.getElementById('sidebar-btn').style.display = 'none';
+    }
+    function closeSidebar() {
+        document.getElementById('info-sidebar').classList.remove('open');
+        document.getElementById('sidebar-backdrop').classList.remove('open');
+        document.getElementById('sidebar-btn').style.display = '';
+    }
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     let skipping = false;
