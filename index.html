@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>穩定幣 vs 傳統金融：錢真的有在跑嗎？</title>
+    <title>銀行轉帳 vs 穩定幣轉帳：底層運作模擬</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,16 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
-                    },
-                    fontSize: {
-                        'base': '1.1rem',
-                        'lg': '1.25rem',
-                        'xl': '1.4rem',
                     }
                 }
             }
@@ -28,16 +22,11 @@
     </script>
     <style>
         .glass {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255,255,255,0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255,255,255,0.5);
         }
-        .dark .glass {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
         .pulse-active {
             animation: pulse-border 1.5s infinite;
             border-color: #3b82f6 !important;
@@ -47,407 +36,536 @@
             border-color: #10b981 !important;
         }
         @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+            0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.4); }
+            70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0);   }
+            100% { box-shadow: 0 0 0 0   rgba(59,130,246,0);   }
         }
         @keyframes pulse-border-crypto {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.4); }
+            70%  { box-shadow: 0 0 0 10px rgba(16,185,129,0);   }
+            100% { box-shadow: 0 0 0 0   rgba(16,185,129,0);   }
         }
-
-        .flow-line {
-            transition: all 0.5s ease-out;
-        }
-        .active-line {
-            background: #3b82f6 !important;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-        }
-        .active-line-crypto {
-            background: #10b981 !important;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
-        }
+        .flow-line { transition: all 0.4s ease-out; }
+        .active-line        { background:#3b82f6 !important; box-shadow:0 0 8px rgba(59,130,246,.5); }
+        .active-line-crypto { background:#10b981 !important; box-shadow:0 0 8px rgba(16,185,129,.5); }
 
         #countdown-container {
             display: none;
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
+            background: rgba(15,23,42,0.72);
+            backdrop-filter: blur(6px);
             z-index: 50;
             border-radius: 1.5rem;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             color: white;
-            padding: 1rem;
+            padding: 1.5rem;
             text-align: center;
         }
+
+        .concept-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 9999px;
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+        .tick { color: #10b981; font-weight:800; }
+        .cross { color: #ef4444; font-weight:800; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-20 transition-colors duration-300">
+<body class="bg-gradient-to-br from-slate-100 to-blue-50 text-slate-800 font-sans min-h-screen pb-24">
 
-    <!-- Theme Toggle -->
-    <div class="fixed top-4 right-4 z-[100] md:top-8 md:right-8">
-        <button onclick="toggleTheme()" class="p-4 rounded-full glass shadow-2xl hover:scale-105 transition-transform flex items-center justify-center border-slate-200 dark:border-slate-800">
-            <i data-lucide="sun" id="sun-icon" class="w-6 h-6 text-amber-500 hidden dark:block"></i>
-            <i data-lucide="moon" id="moon-icon" class="w-6 h-6 text-slate-700 block dark:hidden"></i>
-        </button>
+<div class="max-w-7xl mx-auto pt-12 md:pt-20 px-4 md:px-8">
+
+    <!-- Header -->
+    <header class="text-center mb-14 md:mb-20 px-4">
+        <div class="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 shadow-sm">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i> 帳本機制模擬器
+        </div>
+        <h1 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
+            銀行轉帳 vs 穩定幣轉帳
+        </h1>
+        <p class="text-base md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+            兩種轉帳方式，底層邏輯完全不同。<br>
+            透過互動模擬，理解帳本更新、時差瓶頸與合規機制的本質差異。
+        </p>
+    </header>
+
+    <!-- Core Concept Cards -->
+    <div class="grid md:grid-cols-2 gap-4 mb-12">
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex gap-4">
+            <div class="shrink-0 w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+            </div>
+            <div>
+                <p class="font-bold text-blue-900 mb-1">雙邊帳本（銀行）</p>
+                <p class="text-sm text-blue-700 leading-relaxed">全球各銀行各自維護獨立帳本，沒有統一資料庫。即便有 SWIFT 通訊協議，各國銀行仍有不同上下班時間，無法即時更新。</p>
+            </div>
+        </div>
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex gap-4">
+            <div class="shrink-0 w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <i data-lucide="globe" class="w-5 h-5 text-emerald-600"></i>
+            </div>
+            <div>
+                <p class="font-bold text-emerald-900 mb-1">全球統一帳本（區塊鏈）</p>
+                <p class="text-sm text-emerald-700 leading-relaxed">底層區塊鏈是全球共享、即時更新的單一狀態機，無論從台灣轉到美國，都不受時差影響，區塊確認後即同步。</p>
+            </div>
+        </div>
     </div>
 
-    <div class="max-w-7xl mx-auto pt-10 md:pt-20 px-4 md:px-8">
-        
-        <!-- Header -->
-        <header class="text-center mb-12 md:mb-20 px-4">
-            <h1 class="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-4">
-                錢真的有在跑嗎？
-            </h1>
-            <p class="text-lg md:text-2xl text-slate-600 dark:text-slate-400 font-medium">
-                「錢不會跑，跑的是帳本。」<br class="hidden md:block">
-                <span class="text-sm md:text-base opacity-75 font-normal">一圖看懂傳統金融與穩定幣的底層清算差異</span>
-            </p>
-        </header>
+    <!-- Compliance Callout -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-12 flex gap-4 items-start">
+        <div class="shrink-0 w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mt-0.5">
+            <i data-lucide="shield-check" class="w-5 h-5 text-amber-600"></i>
+        </div>
+        <div>
+            <p class="font-bold text-amber-900 mb-1">合規不是穩定幣的弱點，而是同樣嚴謹</p>
+            <p class="text-sm text-amber-800 leading-relaxed">穩定幣常被誤解為「跳過合規才變快」。事實上，每筆資金匯入交易所時，系統都會執行金流分析（透過 Chainalysis、TRM Labs 等工具），確認鏈上地址無風險才完成入帳。速度快來自帳本架構，不是靠繞過監管。</p>
+        </div>
+    </div>
 
-        <div class="grid lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
-            
-            <!-- Traditional Finance Section -->
-            <div class="glass rounded-3xl p-6 md:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col relative overflow-hidden h-full">
-                
-                <!-- Countdown Overlay -->
-                <div id="countdown-container">
-                    <i data-lucide="moon" class="w-12 h-12 text-blue-400 mb-4 animate-pulse"></i>
-                    <h4 class="text-xl md:text-2xl font-bold mb-2">紐約代理行休息中</h4>
-                    <p class="text-sm md:text-base opacity-80 mb-6 px-4">由於跨國時差，需等待目的地銀行上班後才能繼續處理...</p>
-                    <div id="countdown-timer" class="text-3xl md:text-4xl font-mono font-bold mb-8">12:00:00</div>
-                    <button onclick="skipWait()" class="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all border border-white/30 backdrop-blur-sm">
-                        跳過等待 (加速模擬)
-                    </button>
+    <!-- Simulations -->
+    <div class="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
+
+        <!-- === BANK TRANSFER === -->
+        <div class="glass rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200 flex flex-col relative overflow-hidden">
+
+            <!-- Timezone Overlay -->
+            <div id="countdown-container">
+                <div class="w-16 h-16 rounded-full bg-blue-900/40 flex items-center justify-center mb-5">
+                    <i data-lucide="moon" class="w-8 h-8 text-blue-300 animate-pulse"></i>
                 </div>
-
-                <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h3 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-4">
-                            <div class="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-2xl">
-                                <i data-lucide="building-2" class="text-blue-600 dark:text-blue-400 w-8 h-8"></i>
-                            </div>
-                            傳統金融匯款
-                        </h3>
-                    </div>
-                    <button onclick="runTradFi()" id="btn-tradfi" class="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-500/30 transition-all flex items-center justify-center gap-3 active:scale-95">
-                        <span>模擬台灣匯款</span>
-                        <i data-lucide="send" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <div class="flex-1 flex flex-col relative py-8 min-h-[600px] md:min-h-[700px]">
-                    <div class="absolute left-1/2 top-0 bottom-0 w-1.5 bg-slate-100 dark:bg-slate-800 -translate-x-1/2 z-0 rounded-full"></div>
-                    <div id="trad-line-1" class="absolute left-1/2 top-24 h-32 w-1.5 bg-transparent -translate-x-1/2 z-10 flow-line"></div>
-                    <div id="trad-line-2" class="absolute left-1/2 top-64 h-32 w-1.5 bg-transparent -translate-x-1/2 z-10 flow-line"></div>
-                    <div id="trad-line-3" class="absolute left-1/2 top-[420px] h-32 w-1.5 bg-transparent -translate-x-1/2 z-10 flow-line"></div>
-
-                    <!-- Step 1: Sender -->
-                    <div class="relative z-20 flex justify-center mb-12">
-                        <div class="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-3 flex items-center gap-3 shadow-lg">
-                            <i data-lucide="user" class="w-6 h-6 text-slate-400"></i>
-                            <span class="font-black text-lg">台灣匯款人 ($100.00)</span>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Taiwan Bank -->
-                    <div id="trad-node-1" class="relative z-20 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-xl w-full max-w-sm mx-auto transition-all">
-                        <div class="flex justify-between items-start mb-4">
-                            <h4 class="font-black text-lg flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-blue-500"></i> 台灣本地銀行</h4>
-                            <span class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">09:00 - 15:30</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-inner">
-                            <div class="font-mono text-xs text-slate-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-2 flex justify-between uppercase">
-                                <span>Local Ledger</span>
-                                <i data-lucide="file-text" class="w-3 h-3"></i>
-                            </div>
-                            <div id="trad-ledger-1" class="text-sm md:text-base text-slate-500 dark:text-slate-400 space-y-2">
-                                <p>• 等待客戶填寫電匯申請書</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bilateral Gap 1 -->
-                    <div class="absolute left-1/2 top-48 lg:top-52 -translate-x-1/2 z-30 flex justify-center w-full mt-4">
-                        <div class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
-                            <i data-lucide="unlink" class="w-3.5 h-3.5"></i> 無直接通匯關係 (需繞道)
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Global Intermediary -->
-                    <div id="trad-node-2" class="relative z-20 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-xl w-full max-w-sm mx-auto mt-20 transition-all">
-                        <div class="flex justify-between items-start mb-4">
-                            <h4 class="font-black text-lg flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-amber-500"></i> 紐約代理行</h4>
-                            <span class="text-xs font-bold px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded">時差中心</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-inner">
-                            <div class="font-mono text-xs text-slate-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-2 flex justify-between uppercase">
-                                <span>Intermediary Ledger</span>
-                                <i data-lucide="file-text" class="w-3 h-3"></i>
-                            </div>
-                            <div id="trad-ledger-2" class="text-sm md:text-base text-slate-500 dark:text-slate-400 space-y-2">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bilateral Gap 2 -->
-                    <div class="absolute left-1/2 top-[350px] lg:top-[360px] -translate-x-1/2 z-30 flex justify-center w-full mt-[5.5rem]">
-                        <div class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
-                            <i data-lucide="unlink" class="w-3.5 h-3.5"></i> 無直接通匯關係 (需中轉)
-                        </div>
-                    </div>
-
-                    <!-- Step 4: USA Bank -->
-                    <div id="trad-node-3" class="relative z-20 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-xl w-full max-w-sm mx-auto mt-20 transition-all">
-                        <div class="flex justify-between items-start mb-4">
-                            <h4 class="font-black text-lg flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-indigo-500"></i> 美國受款銀行</h4>
-                            <span class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded whitespace-nowrap">09:00 - 17:00 EST</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-inner">
-                            <div class="font-mono text-xs text-slate-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-2 flex justify-between uppercase">
-                                <span>Local Ledger</span>
-                                <i data-lucide="file-text" class="w-3 h-3"></i>
-                            </div>
-                            <div id="trad-ledger-3" class="text-sm md:text-base text-slate-500 dark:text-slate-400 space-y-2">
-                                <p>• 等待入帳通知</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                    <div class="flex items-start gap-4 text-base text-slate-600 dark:text-slate-400 italic">
-                        <i data-lucide="info" class="w-6 h-6 shrink-0 text-blue-500"></i>
-                        <p>傳統匯款並非「把錢寄過去」，而是各地銀行手上的獨立帳本進行「一來一回」的訊息記錄，最終實體頭寸才在清算行調整。</p>
-                    </div>
-                </div>
+                <h4 class="text-xl md:text-2xl font-black mb-2">紐約代理行休息中</h4>
+                <p class="text-sm opacity-75 mb-1">台灣是白天，紐約是深夜</p>
+                <p class="text-xs opacity-60 mb-6 px-4">由於銀行各有營業時間，跨時區轉帳必須等對方上班才能繼續處理</p>
+                <div id="countdown-timer" class="text-4xl font-mono font-black mb-8 tabular-nums">12:00:00</div>
+                <button onclick="skipWait()" class="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all border border-white/30 text-sm">
+                    跳過等待（加速模擬）
+                </button>
             </div>
 
-            <!-- Stablecoin Section -->
-            <div class="glass rounded-3xl p-6 md:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col relative overflow-hidden h-full">
-                
-                <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h3 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-4">
-                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl">
-                                <i data-lucide="hexagon" class="text-emerald-600 dark:text-emerald-400 w-8 h-8"></i>
-                            </div>
-                            穩定幣轉帳
-                        </h3>
-                    </div>
-                    <button onclick="runCrypto()" id="btn-crypto" class="w-full md:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-xl shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 active:scale-95">
-                        <span>模擬即時轉帳</span>
-                        <i data-lucide="zap" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <div class="flex-1 flex flex-col relative py-8 justify-center min-h-[500px] md:min-h-[600px]">
-                    
-                    <!-- Wallets -->
-                    <div class="grid grid-cols-2 gap-8 md:gap-12 px-2 relative z-20 mb-12">
-                        <div class="text-center">
-                            <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl relative transition-all group hover:border-emerald-500/30">
-                                <i data-lucide="key" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
-                                <span class="block font-black text-sm md:text-md mb-2">錢包 A (台灣)</span>
-                                <div class="text-[10px] text-slate-500 font-bold bg-slate-100 dark:bg-slate-800 py-1.5 rounded-lg flex items-center justify-center gap-1 uppercase tracking-wider">
-                                    <i data-lucide="radio" class="w-3 h-3"></i> 接入狀態機
-                                </div>
-                            </div>
+            <!-- Header -->
+            <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 flex items-center gap-3">
+                        <div class="p-2.5 bg-blue-100 rounded-xl">
+                            <i data-lucide="building-2" class="text-blue-600 w-6 h-6"></i>
                         </div>
-                        <div class="text-center">
-                            <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl relative transition-all group hover:border-emerald-500/30">
-                                <i data-lucide="key" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
-                                <span class="block font-black text-sm md:text-md mb-2">錢包 B (美國)</span>
-                                <div class="text-[10px] text-slate-500 font-bold bg-slate-100 dark:bg-slate-800 py-1.5 rounded-lg flex items-center justify-center gap-1 uppercase tracking-wider">
-                                    <i data-lucide="radio" class="w-3 h-3"></i> 接入狀態機
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Blockchain -->
-                    <div class="relative px-2">
-                        <div class="absolute left-1/4 right-1/4 top-[-60px] h-[60px] border-l-4 border-r-4 border-t-4 border-emerald-100 dark:border-emerald-900/50 rounded-t-[3rem] z-0"></div>
-                        <div id="crypto-line-left" class="absolute left-1/4 top-[-60px] h-14 w-1 bg-transparent z-10 flow-line"></div>
-                        <div id="crypto-line-right" class="absolute right-1/4 top-[-60px] h-14 w-1 bg-transparent z-10 flow-line"></div>
-
-                        <div id="crypto-node" class="relative z-20 bg-emerald-50 dark:bg-slate-900 border-2 border-emerald-100 dark:border-emerald-900/50 rounded-[3rem] p-8 md:p-12 shadow-2xl transition-all">
-                            <div class="absolute inset-0 bg-emerald-500/5 blur-[100px] rounded-full"></div>
-                            <h4 class="font-black text-emerald-800 dark:text-emerald-400 text-2xl mb-8 flex items-center justify-center gap-4 relative z-10">
-                                <i data-lucide="database" class="w-8 h-8"></i> 全球單一狀態機 (Global State)
-                            </h4>
-                            
-                            <div class="bg-white dark:bg-slate-950 rounded-3xl p-6 md:p-8 space-y-6 shadow-inner relative z-10 border border-emerald-50 dark:border-emerald-900/20">
-                                <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl">
-                                    <span class="text-slate-500 font-bold uppercase tracking-tighter text-xs flex items-center gap-2"><i data-lucide="database" class="w-3 h-3"></i> Address A State</span>
-                                    <span id="crypto-bal-a" class="font-mono text-xl md:text-2xl font-black text-slate-900 dark:text-white">100.00 USDC</span>
-                                </div>
-                                <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl">
-                                    <span class="text-slate-500 font-bold uppercase tracking-tighter text-xs flex items-center gap-2"><i data-lucide="database" class="w-3 h-3"></i> Address B State</span>
-                                    <span id="crypto-bal-b" class="font-mono text-xl md:text-2xl font-black text-slate-900 dark:text-white">0.00 USDC</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        銀行跨境匯款
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1.5 ml-12">雙邊帳本 · SWIFT MT103 · 時差敏感</p>
                 </div>
-
-                <div class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                    <div class="flex items-start gap-4 text-base text-emerald-700 dark:text-emerald-500 italic">
-                        <i data-lucide="check-circle" class="w-6 h-6 shrink-0"></i>
-                        <p>穩定幣清算不分地區，因為全球節點共享同一個「狀態帳本」，只要區塊確認，兩地的餘額是同步瞬時更新的。</p>
-                    </div>
-                </div>
+                <button onclick="runTradFi()" id="btn-tradfi" class="w-full sm:w-auto px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2.5 active:scale-95 text-sm">
+                    <span>模擬台灣 → 美國</span>
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
             </div>
 
+            <!-- Flow -->
+            <div class="flex flex-col gap-0 relative py-4">
+
+                <!-- Vertical track -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-100 -translate-x-1/2 z-0 rounded-full"></div>
+
+                <!-- Sender pill -->
+                <div class="relative z-20 flex justify-center mb-6">
+                    <div class="bg-white border-2 border-slate-200 rounded-2xl px-5 py-2.5 flex items-center gap-2.5 shadow-md">
+                        <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+                        <span class="font-black text-base">台灣匯款人（$100 USD）</span>
+                    </div>
+                </div>
+
+                <!-- Line 1 -->
+                <div id="trad-line-1" class="absolute left-1/2 -translate-x-1/2 z-10 flow-line w-1 bg-transparent" style="top:70px;height:36px;"></div>
+
+                <!-- Node 1: Taiwan Bank -->
+                <div id="trad-node-1" class="relative z-20 bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-lg w-full max-w-sm mx-auto transition-all mb-3">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-black text-sm flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-blue-500"></i>
+                            台灣本地銀行帳本
+                        </h4>
+                        <span class="concept-badge bg-blue-50 text-blue-600">09:00–15:30 TST</span>
+                    </div>
+                    <div id="trad-ledger-1" class="text-xs text-slate-500 space-y-1.5 bg-slate-50 rounded-xl p-3 border border-slate-100 font-mono leading-relaxed">
+                        <p>// 等待客戶填寫電匯申請書</p>
+                    </div>
+                </div>
+
+                <!-- Gap badge 1 -->
+                <div class="relative z-30 flex justify-center my-1">
+                    <div class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="unlink" class="w-3 h-3"></i> 雙邊帳本斷點：無直接通匯，需繞道
+                    </div>
+                </div>
+
+                <!-- Line 2 -->
+                <div id="trad-line-2" class="absolute left-1/2 -translate-x-1/2 z-10 flow-line w-1 bg-transparent" style="top:calc(70px + 36px + 140px + 28px);height:36px;"></div>
+
+                <!-- Node 2: Correspondent -->
+                <div id="trad-node-2" class="relative z-20 bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-lg w-full max-w-sm mx-auto transition-all mb-3 mt-3">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-black text-sm flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-amber-500"></i>
+                            紐約代理行帳本
+                        </h4>
+                        <span class="concept-badge bg-amber-50 text-amber-600">09:00–17:00 EST</span>
+                    </div>
+                    <div id="trad-ledger-2" class="text-xs text-slate-500 space-y-1.5 bg-slate-50 rounded-xl p-3 border border-slate-100 font-mono leading-relaxed">
+                        <p>// 等待接收 SWIFT 封包</p>
+                    </div>
+                </div>
+
+                <!-- Gap badge 2 -->
+                <div class="relative z-30 flex justify-center my-1">
+                    <div class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="unlink" class="w-3 h-3"></i> 雙邊帳本斷點：需再中轉至受款行
+                    </div>
+                </div>
+
+                <!-- Node 3: US Bank -->
+                <div id="trad-node-3" class="relative z-20 bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-lg w-full max-w-sm mx-auto transition-all mt-3">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-black text-sm flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-indigo-500"></i>
+                            美國受款銀行帳本
+                        </h4>
+                        <span class="concept-badge bg-indigo-50 text-indigo-600">09:00–17:00 EST</span>
+                    </div>
+                    <div id="trad-ledger-3" class="text-xs text-slate-500 space-y-1.5 bg-slate-50 rounded-xl p-3 border border-slate-100 font-mono leading-relaxed">
+                        <p>// 等待入帳通知</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer note -->
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <div class="flex items-start gap-3 text-sm text-slate-500">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-blue-400 mt-0.5"></i>
+                    <p>銀行轉帳的本質是：各地銀行的獨立帳本透過 SWIFT 訊息做「一來一回」的記錄同步，實體頭寸最終才在清算行調整。各帳本之間沒有統一資料庫，時差是結構性瓶頸。</p>
+                </div>
+            </div>
         </div>
 
-        <footer class="mt-20 text-center opacity-30 pb-10">
-            <p class="text-sm font-bold tracking-widest text-slate-500 uppercase">Interactive Settlement Comparison Tool</p>
-        </footer>
+        <!-- === STABLECOIN TRANSFER === -->
+        <div class="glass rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200 flex flex-col">
+
+            <!-- Header -->
+            <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 flex items-center gap-3">
+                        <div class="p-2.5 bg-emerald-100 rounded-xl">
+                            <i data-lucide="zap" class="text-emerald-600 w-6 h-6"></i>
+                        </div>
+                        穩定幣轉帳
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1.5 ml-12">全球單一帳本 · 無時差 · 即時確認</p>
+                </div>
+                <button onclick="runCrypto()" id="btn-crypto" class="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2.5 active:scale-95 text-sm">
+                    <span>模擬即時轉帳</span>
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Wallets row -->
+            <div class="grid grid-cols-2 gap-4 mb-6 relative z-20">
+                <div id="wallet-a" class="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-md text-center transition-all">
+                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="key" class="w-5 h-5 text-slate-400"></i>
+                    </div>
+                    <p class="font-black text-sm mb-1">錢包 A（台灣）</p>
+                    <div class="text-[10px] text-slate-400 font-bold bg-slate-50 py-1 rounded-lg flex items-center justify-center gap-1 uppercase tracking-wider border border-slate-100">
+                        <i data-lucide="radio" class="w-2.5 h-2.5"></i> 連接至狀態機
+                    </div>
+                </div>
+                <div id="wallet-b" class="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-md text-center transition-all">
+                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="key" class="w-5 h-5 text-slate-400"></i>
+                    </div>
+                    <p class="font-black text-sm mb-1">錢包 B（美國）</p>
+                    <div class="text-[10px] text-slate-400 font-bold bg-slate-50 py-1 rounded-lg flex items-center justify-center gap-1 uppercase tracking-wider border border-slate-100">
+                        <i data-lucide="radio" class="w-2.5 h-2.5"></i> 連接至狀態機
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connector lines -->
+            <div class="flex justify-center gap-0 mb-0 relative h-8">
+                <div id="crypto-line-left"  class="w-0.5 bg-slate-100 mx-auto flow-line" style="position:absolute;left:25%;height:32px;top:0;"></div>
+                <div id="crypto-line-right" class="w-0.5 bg-slate-100 mx-auto flow-line" style="position:absolute;right:25%;height:32px;top:0;"></div>
+            </div>
+
+            <!-- Global State Machine -->
+            <div id="crypto-node" class="relative bg-emerald-50 border-2 border-emerald-100 rounded-3xl p-6 md:p-8 shadow-xl transition-all">
+                <div class="absolute inset-0 bg-emerald-400/5 blur-[80px] rounded-full pointer-events-none"></div>
+                <h4 class="font-black text-emerald-800 text-lg mb-5 flex items-center gap-3 relative z-10">
+                    <i data-lucide="globe" class="w-6 h-6"></i>
+                    全球單一狀態機（Global Ledger）
+                </h4>
+
+                <div class="bg-white rounded-2xl p-5 space-y-4 shadow-inner border border-emerald-50 relative z-10">
+                    <div class="flex justify-between items-center bg-slate-50 rounded-xl px-4 py-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3 h-3"></i> Address A · 台灣
+                        </span>
+                        <span id="crypto-bal-a" class="font-mono text-xl font-black text-slate-900">100.00 USDC</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-50 rounded-xl px-4 py-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3 h-3"></i> Address B · 美國
+                        </span>
+                        <span id="crypto-bal-b" class="font-mono text-xl font-black text-slate-900">0.00 USDC</span>
+                    </div>
+                </div>
+
+                <!-- Compliance flow (shown during simulation) -->
+                <div id="compliance-flow" class="mt-4 relative z-10 hidden">
+                    <div class="bg-white rounded-xl p-4 border border-emerald-100 text-xs space-y-2">
+                        <p class="font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                            <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-600"></i> 合規掃描流程（交易所端）
+                        </p>
+                        <div id="compliance-step-1" class="flex items-center gap-2 text-slate-400">
+                            <span class="w-4 text-center">○</span>
+                            <span>地址格式驗證</span>
+                        </div>
+                        <div id="compliance-step-2" class="flex items-center gap-2 text-slate-400">
+                            <span class="w-4 text-center">○</span>
+                            <span>Chainalysis / TRM Labs 金流分析</span>
+                        </div>
+                        <div id="compliance-step-3" class="flex items-center gap-2 text-slate-400">
+                            <span class="w-4 text-center">○</span>
+                            <span>風險評分確認（無制裁名單命中）</span>
+                        </div>
+                        <div id="compliance-step-4" class="flex items-center gap-2 text-slate-400">
+                            <span class="w-4 text-center">○</span>
+                            <span>廣播上鏈 → 等待區塊確認</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="crypto-confirm-badge" class="hidden mt-4 relative z-10">
+                    <div class="bg-emerald-600 text-white rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-bold fade-in">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        區塊確認完成 — 全球節點同步更新，無需時差等待
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer note -->
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <div class="flex items-start gap-3 text-sm text-slate-500">
+                    <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-emerald-500 mt-0.5"></i>
+                    <p>穩定幣快不是因為跳過合規，而是帳本架構本身沒有「地區分隔」。交易所端同樣有嚴謹的 KYC/AML 與金流分析，但底層清算在單一全球帳本上完成，不受時區限制。</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script>
+    <!-- Bottom comparison table -->
+    <div class="mt-12 bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="grid grid-cols-3 divide-x divide-slate-100">
+            <div class="p-5 bg-slate-50">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">比較項目</p>
+            </div>
+            <div class="p-5 flex items-center gap-2">
+                <i data-lucide="building-2" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                <p class="font-black text-sm text-blue-700">銀行跨境匯款</p>
+            </div>
+            <div class="p-5 flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                <p class="font-black text-sm text-emerald-700">穩定幣轉帳</p>
+            </div>
+        </div>
+        <div class="divide-y divide-slate-100">
+            <div class="grid grid-cols-3 divide-x divide-slate-100">
+                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">帳本架構</div>
+                <div class="p-4 text-sm text-slate-600">各銀行獨立維護，無統一資料庫</div>
+                <div class="p-4 text-sm text-slate-600">全球共享單一狀態機</div>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-slate-100">
+                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">時差影響</div>
+                <div class="p-4 text-sm text-slate-600"><span class="cross">✕</span> 高度敏感，需等對方銀行上班</div>
+                <div class="p-4 text-sm text-slate-600"><span class="tick">✓</span> 完全不受時差影響</div>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-slate-100">
+                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">清算時間</div>
+                <div class="p-4 text-sm text-slate-600">1–5 個工作日</div>
+                <div class="p-4 text-sm text-slate-600">數秒至數分鐘（一個區塊）</div>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-slate-100">
+                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">合規機制</div>
+                <div class="p-4 text-sm text-slate-600">人工審核 + 聯徵合規（造成延遲）</div>
+                <div class="p-4 text-sm text-slate-600">自動化金流分析（Chainalysis / TRM），速度快但同樣嚴謹</div>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-slate-100">
+                <div class="p-4 bg-slate-50 text-xs font-bold text-slate-500">手續費</div>
+                <div class="p-4 text-sm text-slate-600">電匯費 + 中轉費 + 解款費，可達 $30+</div>
+                <div class="p-4 text-sm text-slate-600">Gas fee 為主，通常遠低於 $1</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-16 text-center pb-6">
+        <p class="text-xs font-bold tracking-widest text-slate-400 uppercase">Bank Transfer vs Stablecoin Transfer · Interactive Ledger Simulator</p>
+    </footer>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let skipping = false;
+
+    function skipWait() { skipping = true; }
+
+    async function runTradFi() {
+        const btn = document.getElementById('btn-tradfi');
+        const btnC = document.getElementById('btn-crypto');
+        [btn, btnC].forEach(b => { b.disabled = true; });
+        skipping = false;
+
+        btn.innerHTML = `<span>處理中...</span><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
         lucide.createIcons();
 
-        function toggleTheme() {
-            const html = document.documentElement;
-            html.classList.toggle('dark');
-            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        // Reset
+        ['trad-node-1','trad-node-2','trad-node-3'].forEach(id => document.getElementById(id).classList.remove('pulse-active'));
+        ['trad-line-1','trad-line-2'].forEach(id => document.getElementById(id).classList.remove('active-line'));
+        document.getElementById('trad-ledger-1').innerHTML = `<p>// 等待客戶填寫電匯申請書</p>`;
+        document.getElementById('trad-ledger-2').innerHTML = `<p>// 等待接收 SWIFT 封包</p>`;
+        document.getElementById('trad-ledger-3').innerHTML = `<p>// 等待入帳通知</p>`;
+
+        await sleep(600);
+
+        // Step 1: Taiwan Bank
+        document.getElementById('trad-node-1').classList.add('pulse-active');
+        document.getElementById('trad-ledger-1').innerHTML = `
+            <p class="text-blue-600 font-bold fade-in">// 驗印扣帳完成（$100 USD）</p>
+            <p class="text-red-500 fade-in">// 扣除電匯手續費 NT$600</p>
+            <p class="fade-in">// 聯徵合規複核（Compliance check）</p>
+            <p class="text-slate-600 fade-in">// 發送 SWIFT MT103 封包</p>
+        `;
+        lucide.createIcons();
+        await sleep(2800);
+        document.getElementById('trad-node-1').classList.remove('pulse-active');
+        document.getElementById('trad-line-1').classList.add('active-line');
+        await sleep(800);
+
+        // Timezone overlay
+        const overlay = document.getElementById('countdown-container');
+        const timer = document.getElementById('countdown-timer');
+        overlay.style.display = 'flex';
+        let seconds = 12 * 3600;
+        const fmt = () => {
+            const h = Math.floor(seconds/3600).toString().padStart(2,'0');
+            const m = Math.floor((seconds%3600)/60).toString().padStart(2,'0');
+            const s = (seconds%60).toString().padStart(2,'0');
+            timer.innerText = `${h}:${m}:${s}`;
+        };
+        for (let i = 0; i < 280; i++) {
+            if (skipping) break;
+            seconds = Math.max(0, seconds - (Math.floor(Math.random()*320)+80));
+            fmt();
+            await sleep(18);
         }
+        overlay.style.display = 'none';
 
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+        // Step 2: Correspondent
+        document.getElementById('trad-node-2').classList.add('pulse-active');
+        document.getElementById('trad-ledger-2').innerHTML = `
+            <p class="text-blue-600 font-bold fade-in">// 美國上班，接收結算清單</p>
+            <p class="text-red-500 fade-in">// 扣除中轉手續費 $20</p>
+            <p class="fade-in">// Fedwire 資金調度</p>
+        `;
+        lucide.createIcons();
+        await sleep(2800);
+        document.getElementById('trad-node-2').classList.remove('pulse-active');
+        document.getElementById('trad-line-2').classList.add('active-line');
+        await sleep(800);
 
-        const sleep = ms => new Promise(r => setTimeout(r, ms));
-        let skipping = false;
+        // Step 3: US Bank
+        document.getElementById('trad-node-3').classList.add('pulse-active');
+        document.getElementById('trad-ledger-3').innerHTML = `
+            <p class="fade-in">// 清算行入帳確認</p>
+            <p class="text-red-500 fade-in">// 扣除解款行費用 $10</p>
+            <p class="text-emerald-600 font-bold fade-in">// 最終解付至受款人（$70 USD）</p>
+        `;
+        lucide.createIcons();
+        await sleep(2800);
+        document.getElementById('trad-node-3').classList.remove('pulse-active');
 
-        function skipWait() {
-            skipping = true;
-        }
+        [btn, btnC].forEach(b => { b.disabled = false; });
+        btn.innerHTML = `<span>重新模擬</span><i data-lucide="refresh-cw" class="w-4 h-4"></i>`;
+        lucide.createIcons();
+    }
 
-        async function runTradFi() {
-            const btn = document.getElementById('btn-tradfi');
-            const btns = [btn, document.getElementById('btn-crypto')];
-            btns.forEach(b => b.disabled = true);
-            skipping = false;
-            
-            btn.innerHTML = `<span>處理中...</span><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
-            lucide.createIcons();
+    async function runCrypto() {
+        const btn = document.getElementById('btn-crypto');
+        const btnT = document.getElementById('btn-tradfi');
+        [btn, btnT].forEach(b => { b.disabled = true; });
 
-            // Reset
-            const nodes = ['trad-node-1', 'trad-node-2', 'trad-node-3'];
-            const lines = ['trad-line-1', 'trad-line-2', 'trad-line-3'];
-            nodes.forEach(id => document.getElementById(id).classList.remove('pulse-active'));
-            lines.forEach(id => document.getElementById(id).classList.remove('active-line'));
-            document.getElementById('trad-ledger-1').innerHTML = "<p>• 等待客戶填寫電匯申請書</p>";
-            document.getElementById('trad-ledger-2').innerHTML = "<p>• 等待接收 SWIFT 封包</p>";
-            document.getElementById('trad-ledger-3').innerHTML = "<p>• 等待入帳通知</p>";
+        btn.innerHTML = `<span>廣播交易中...</span><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+        lucide.createIcons();
 
-            await sleep(800);
+        // Reset
+        document.getElementById('crypto-node').classList.remove('pulse-crypto');
+        document.getElementById('crypto-line-left').classList.remove('active-line-crypto');
+        document.getElementById('crypto-line-right').classList.remove('active-line-crypto');
+        document.getElementById('crypto-bal-a').innerHTML = '100.00 USDC';
+        document.getElementById('crypto-bal-b').innerHTML = '0.00 USDC';
+        document.getElementById('compliance-flow').classList.add('hidden');
+        document.getElementById('crypto-confirm-badge').classList.add('hidden');
+        ['compliance-step-1','compliance-step-2','compliance-step-3','compliance-step-4'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('text-emerald-600','font-bold');
+            el.classList.add('text-slate-400');
+            el.querySelector('span').textContent = '○';
+        });
 
-            // Step 1: Taiwan Bank
-            document.getElementById('trad-node-1').classList.add('pulse-active');
-            document.getElementById('trad-ledger-1').innerHTML = `
-                <p class='text-blue-600 dark:text-blue-400 font-bold'>• 驗印扣帳完成 ($100)</p>
-                <p class='text-red-500 font-bold'>• 扣除電匯郵電費 NT$600</p>
-                <p>• 聯徵合規複核 (Compliance)</p>
-                <p>• 發送 SWIFT MT103</p>
-            `;
-            await sleep(3000);
-            document.getElementById('trad-node-1').classList.remove('pulse-active');
-            document.getElementById('trad-line-1').classList.add('active-line');
-            await sleep(1000);
+        await sleep(500);
 
-            // Step 2: Timezone Wait Overlay
-            const overlay = document.getElementById('countdown-container');
-            const timer = document.getElementById('countdown-timer');
-            overlay.style.display = 'flex';
-            
-            let seconds = 12 * 3600;
-            const updateTimer = () => {
-                const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-                const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-                const s = (seconds % 60).toString().padStart(2, '0');
-                timer.innerText = `${h}:${m}:${s}`;
-            };
+        // Show compliance flow
+        document.getElementById('compliance-flow').classList.remove('hidden');
 
-            for(let i=0; i<300; i++) {
-                if(skipping) break;
-                seconds -= Math.floor(Math.random() * 300) + 100;
-                if(seconds < 0) seconds = 0;
-                updateTimer();
-                await sleep(20);
-            }
-            overlay.style.display = 'none';
-
-            // Intermediary logic
-            document.getElementById('trad-node-2').classList.add('pulse-active');
-            document.getElementById('trad-ledger-2').innerHTML = `
-                <p class='text-blue-600 dark:text-blue-400 font-bold'>• 美國上班，收到結算清單</p>
-                <p class='text-red-500 font-bold'>• 扣除中轉手續費 $20</p>
-                <p>• Fedwire 資金調度</p>
-            `;
-            await sleep(3000);
-            document.getElementById('trad-node-2').classList.remove('pulse-active');
-            document.getElementById('trad-line-2').classList.add('active-line');
-            await sleep(1000);
-
-            // Step 3: US Bank
-            document.getElementById('trad-node-3').classList.add('pulse-active');
-            document.getElementById('trad-ledger-3').innerHTML = `
-                <p>• 清算行入帳確認</p>
-                <p class='text-red-500 font-bold'>• 扣除解款行費用 $10</p>
-                <p class='text-emerald-600 dark:text-emerald-400 font-bold'>• 最終解付至受款人 ($70)</p>
-            `;
-            await sleep(3000);
-            document.getElementById('trad-node-3').classList.remove('pulse-active');
-            document.getElementById('trad-line-3').classList.add('active-line');
-
-            btn.disabled = false;
-            btns.forEach(b => b.disabled = false);
-            btn.innerHTML = `<span>重新模擬</span><i data-lucide="refresh-cw" class="w-5 h-5"></i>`;
-            lucide.createIcons();
-        }
-
-        async function runCrypto() {
-            const btn = document.getElementById('btn-crypto');
-            const btns = [btn, document.getElementById('btn-tradfi')];
-            btns.forEach(b => b.disabled = true);
-            
-            btn.innerHTML = `<span>上鏈打包中...</span><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
-            lucide.createIcons();
-
-            // Reset
-            document.getElementById('crypto-node').classList.remove('pulse-crypto');
-            document.getElementById('crypto-line-left').classList.remove('active-line-crypto');
-            document.getElementById('crypto-line-right').classList.remove('active-line-crypto');
-            document.getElementById('crypto-bal-a').innerText = "100.00 USDC";
-            document.getElementById('crypto-bal-b').innerText = "0.00 USDC";
-            
-            await sleep(1000);
-            document.getElementById('crypto-line-left').classList.add('active-line-crypto');
+        const steps = ['compliance-step-1','compliance-step-2','compliance-step-3','compliance-step-4'];
+        for (const id of steps) {
             await sleep(600);
-
-            document.getElementById('crypto-node').classList.add('pulse-crypto');
-            document.getElementById('crypto-bal-a').innerHTML = "0.00 USDC <span class='text-xs text-red-500'>-100</span>";
-            document.getElementById('crypto-bal-b').innerHTML = "100.00 USDC <span class='text-xs text-emerald-500'>+100</span>";
-            
-            await sleep(800);
-            document.getElementById('crypto-line-right').classList.add('active-line-crypto');
-            await sleep(1500);
-            document.getElementById('crypto-node').classList.remove('pulse-crypto');
-
-            btn.disabled = false;
-            btns.forEach(b => b.disabled = false);
-            btn.innerHTML = `<span>重新轉帳</span><i data-lucide="refresh-cw" class="w-5 h-5"></i>`;
-            lucide.createIcons();
+            const el = document.getElementById(id);
+            el.querySelector('span').textContent = '✓';
+            el.classList.remove('text-slate-400');
+            el.classList.add('text-emerald-600','font-bold','fade-in');
         }
-    </script>
+
+        await sleep(500);
+        document.getElementById('crypto-line-left').classList.add('active-line-crypto');
+        await sleep(400);
+        document.getElementById('crypto-node').classList.add('pulse-crypto');
+
+        document.getElementById('crypto-bal-a').innerHTML = `0.00 USDC <span class="text-xs font-bold text-red-500 fade-in">−100</span>`;
+        document.getElementById('crypto-bal-b').innerHTML = `100.00 USDC <span class="text-xs font-bold text-emerald-500 fade-in">+100</span>`;
+
+        await sleep(700);
+        document.getElementById('crypto-line-right').classList.add('active-line-crypto');
+        await sleep(1200);
+        document.getElementById('crypto-node').classList.remove('pulse-crypto');
+        document.getElementById('crypto-confirm-badge').classList.remove('hidden');
+
+        [btn, btnT].forEach(b => { b.disabled = false; });
+        btn.innerHTML = `<span>重新轉帳</span><i data-lucide="refresh-cw" class="w-4 h-4"></i>`;
+        lucide.createIcons();
+    }
+</script>
 </body>
 </html>
